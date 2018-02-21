@@ -103,9 +103,8 @@ ldf <- ReadListofDTA(listdta)
 SmallSurvivalList <- list()
 PlotList <- list()
 
-for (i in length(ldf)){
+for (i in 1:length(ldf)){
 
-  i <- 1
 wide <- ldf[[i]]
 
 # select variables and create dataset for birth reshape and FGM reshape
@@ -187,3 +186,4 @@ confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 plot <- plot(SmallSurvival, pars = NULL, ci = TRUE)
 PlotList[[i]] <- plot  # store plot in list
 }
+
