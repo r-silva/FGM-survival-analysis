@@ -40,15 +40,37 @@ library(survminer)
 # function definitions
 ###########
 
-#time function
-#create id
+
+
+CalculateTimetoEvent <- function(x,y,z){
+  # calculates the time (years) that has passed until a certain event(FGM) occurs
+  # and in the case, there was no event, uses proxy (age)
+  #
+  #Args:
+  #   w = dataframe
+  #   x = event indicator variable
+  #   y = age at wich event occured
+  #   z = substitute in case no event
+  #
+  #Returns:
+  # new dataframe with time to event column
+  
+  time <- ifelse(x == 0, z, ifelse(x == 1, y, NA))
+  
+  time <- as.numeric(time)
+  
+  return(time)
+
+
+}
+
 
 ###########
 # executed statements
 ###########
 
-
 # read in data
+
 eth2016_wide <- read.dta("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/01 -Ethiopia_DHS 2016/STATA/ETIR70FL.DTA", convert.factors=FALSE)
 # eth2016 <- read.dta("C:/Users/Kathrin Weny/Google Drive/FGM/Survival Analysis/Ethiopia_DHS 2016/STATA/ETIR70FL.dta", convert.factors=FALSE)
 
@@ -93,9 +115,7 @@ colnames(df)[2] <- "caseid"
 
 # add time to event column
 
-time <- ifelse(df$g121 == 0, df$b8, ifelse(df$g121 == 1, df$g122, "na"))
-
-time <- as.numeric(time)
+time <- CalculateTimetoEvent(df$g121,df$g122,df$b8)
 
 df <- df %>%
   mutate(time = time)
@@ -109,12 +129,6 @@ df$wgt <- as.numeric(df$v005 / 1000000)
 
 memory.limit(550000) 
 
-# bring in complex survey format
-eth2016_dhs_design <- svydesign(id      = ~v021,
-                                strata  = df$v022,  # V022 Sample strata for standard errors
-                                weights = df$wgt,  # weight expressed in 6 decimals
-                                data    = df)
-
 # create a small sample survey to calculate standard errors
 SmallSurvey <- svydesign(id             = ~v021, 
                          strata         = df$v022, 
@@ -125,6 +139,6 @@ SmallSurvey <- svydesign(id             = ~v021,
 SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
 
 confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
-confint(SmallSurvival, parm = c(1.4), level = 0.95)
+
 plot(SmallSurvival, pars = NULL, ci = TRUE)
 
