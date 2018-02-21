@@ -71,8 +71,8 @@ ReadListofDTA <- function(x){
   
   ldf <- list() # creates a list
   
-  for (k in 1:length(x)){
-    ldf[[k]] <- read.dta(x[k], convert.factors=FALSE)
+  for (k in 1 : length(x)){
+    ldf[[k]] <- read.dta(x[k], convert.factors = FALSE)
   }
   
   names(ldf) <- x
@@ -105,14 +105,24 @@ PlotList <- list()
 
 for (i in length(ldf)){
 
+  i <- 1
 wide <- ldf[[i]]
 
 # select variables and create dataset for birth reshape and FGM reshape
 wide_allchildren <- wide %>%
-  dplyr::select(c(1, 3:4, 7, 25:29, 51, 4864, 4866, 4867:4870, 4880, 66:67, 77, 87, 102, 3624, 227:246, 307:326))
+  dplyr::select(c("caseid","v001","v002","v005","v021","v022","v023","v024","v025",
+                  "bidx_01","bidx_02","bidx_03","bidx_04","bidx_05","bidx_06","bidx_07","bidx_08","bidx_09","bidx_10","bidx_11","bidx_12","bidx_13","bidx_14","bidx_15","bidx_16","bidx_17","bidx_18","bidx_19","bidx_20",
+                  "b4_01","b4_02","b4_03","b4_04","b4_05","b4_06","b4_07","b4_08","b4_09","b4_10","b4_11","b4_12","b4_13","b4_14","b4_15","b4_16","b4_17","b4_18","b4_19","b4_20",
+                  "b8_01","b8_02","b8_03","b8_04","b8_05","b8_06","b8_07","b8_08","b8_09","b8_10","b8_11","b8_12","b8_13","b8_14","b8_15","b8_16","b8_17","b8_18","b8_19","b8_20"))
 
 wide_fgm <- wide %>%
-  dplyr::select(c(1, 4894:4914, 4915:4994))
+  dplyr::select(c("caseid","v001",
+                  "gidx_01","gidx_02","gidx_03","gidx_04","gidx_05","gidx_06","gidx_07","gidx_08","gidx_09","gidx_10","gidx_11","gidx_12","gidx_13","gidx_14","gidx_15","gidx_16","gidx_17","gidx_18","gidx_19","gidx_20",
+                  "g121_01","g121_02","g121_03","g121_04","g121_05","g121_06","g121_07","g121_08","g121_09","g121_10","g121_11","g121_12","g121_13","g121_14","g121_15","g121_16","g121_17","g121_18","g121_19","g121_20",
+                  "g122_01","g122_02","g122_03","g122_04","g122_05","g122_06","g122_07","g122_08","g122_09","g122_10","g122_11","g122_12","g122_13","g122_14","g122_15","g122_16","g122_17","g122_18","g122_19","g122_20",
+                  "g123_01","g123_02","g123_03","g123_04","g123_05","g123_06","g123_07","g123_08","g123_09","g123_10","g123_11","g123_12","g123_13","g123_14","g123_15","g123_16","g123_17","g123_18","g123_19","g123_20",
+                  "g124_01","g124_02","g124_03","g124_04","g124_05","g124_06","g124_07","g124_08","g124_09","g124_10","g124_11","g124_12","g124_13","g124_14","g124_15","g124_16","g124_17","g124_18","g124_19","g124_20"))
+
 
 # reshape FGM module
 long_fgm <- reshape(wide_fgm, varying = c(3:102), direction = "long", idvar = "caseid", sep = "_", timevar = "order")
@@ -130,7 +140,7 @@ long_fgm <- long_fgm %>%
 
 # reshape ALL CHILDREN
 
-long_allchildren <- reshape(wide_allchildren, varying = c(24:63), direction = "long", idvar = "caseid", sep = "_", timevar="order")
+long_allchildren <- reshape(wide_allchildren, varying = c(10:69), direction = "long", idvar = "caseid", sep = "_", timevar="order")
 
 # create ID for merge
 long_allchildren <- long_allchildren %>%
@@ -153,6 +163,9 @@ df <- df %>%
 df <- df %>%
   mutate(id = 1)
 
+#NAs
+df$time <- ifelse(df$time==98 | df$time==99,NA,df$time)
+
 # create weight variable from v005
 df$wgt <- as.numeric(df$v005 / 1000000)
 
@@ -167,10 +180,10 @@ SmallSurvey <- svydesign(id             = ~v021,
                          data           = df)
 
 SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
-SmallSurvivalList[[i]]     <- SmallSurvival
+SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
 
 confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
 
 plot <- plot(SmallSurvival, pars = NULL, ci = TRUE)
-PlotList[[i]]     <- plot
+PlotList[[i]] <- plot  # store plot in list
 }
