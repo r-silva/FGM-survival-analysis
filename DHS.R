@@ -37,6 +37,10 @@ library(survminer)
 
 options(scipen = 999)  # disable scientific notation in R
 
+setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
+
+listdta <- dir(pattern = "*.DTA") # stores names of all DTA files in a list
+
 ###########
 # function definitions
 ###########
@@ -70,8 +74,6 @@ ReadListofDTA <- function(x){
   # Returns:
   #  ldf     = list of all data frames in the directory named by x
   
-  listdta <- dir(x,pattern = "*.DTA") # stores names of all DTA files in a list
-  
   ldf <- list() # creates a list
   
   for (k in 1 : length(listdta)){
@@ -84,20 +86,16 @@ ReadListofDTA <- function(x){
   
 }
 
-
-ReadSingleDTA <- function(x,y){
+ReadSingleDTA <- function(x){
   # reads in one DTA file from a given directory
   # 
   # Args:
-  #  x = A directory
-  #  y = list index of file to be read into R
+  #  x = list index of file to be read into R
   #
   # Returns:
   #  single dataset
   
-  listdta <- dir(x,pattern = "*.DTA") # finds dta files in the directory
-  
-  data <- read.dta(paste(x,"/",listdta[y], sep=""), convert.factors = FALSE)
+  data <- read.dta(listdta[x], convert.factors = FALSE)
   
   return(data)
   
@@ -111,19 +109,20 @@ ReadSingleDTA <- function(x,y){
 # read in stata datafiles
 
 # for pcs with a lot of memory
-# ldf <- ReadListofDTA("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS") 
+# ldf <- ReadListofDTA() 
 
 # create empty list to store results in loop
 SmallSurvivalList <- list()
 PlotList <- list()
 
-for (i in 1:length(ldf)){
+for (i in 1:length(listdta)){
 
-  # for pcs with a lot of memory
+
+    # for pcs with a lot of memory
   #wide <- ldf[[i]]
   
   # if limited memory
-  wide <- ReadSingleDTA("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS",i) 
+  wide <- ReadSingleDTA(i) 
   
   # select variables and create dataset for birth reshape and FGM reshape
   wide_allchildren <- wide %>%
@@ -197,8 +196,8 @@ for (i in 1:length(ldf)){
                            data           = df)
   
   # free memomry for KM estimates
-  rm(wide, wide_allchildren,long_allchildren,data, wide_fgm,long_fgm,df,time)
-  
+  rm(wide, wide_allchildren,long_allchildren, wide_fgm,long_fgm,df,time)
+
   # KM estimate
   SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
   SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
