@@ -115,8 +115,8 @@ ReadSingleDTA <- function(x){
 SmallSurvivalList <- list()
 PlotList <- list()
 
-for (i in 1:length(listdta)){
-
+#for (i in 1:length(listdta)){
+i<- 10
 
     # for pcs with a lot of memory
   #wide <- ldf[[i]]
@@ -207,4 +207,22 @@ for (i in 1:length(listdta)){
   # plot
   plot <- plot(SmallSurvival, pars = NULL, ci = TRUE)
   PlotList[[i]] <- plot  # store plot in list
-}
+#}
+
+  library (data.table)
+str(SmallSurvivalList[[10]]$varlog)
+
+x <- as.data.table(SmallSurvivalList[[10]]$varlog)
+
+plot(SmallSurvival, pars = NULL, ci = TRUE, ylim=c(0.985,1.0))
+
+
+
+
+
+
+
+
+
+
+
