@@ -138,6 +138,7 @@ nEvent            <- list()
 
 for (i in 1:length(listdta)){
 
+  
 # for pcs with a lot of memory select one DHS stat file from list ldf created above
 # wide <- ldf[[i]]
 
@@ -220,6 +221,10 @@ rm(wide, wide_allchildren,long_allchildren, wide_fgm,long_fgm,time)
 # garbage colleaction: clear up RAM
 gc()
 
+
+
+
+
 # Only enable if you have a super computer --------------------------------
 
 # increase memory, is Windows specific, R server runs in Ubuntu
@@ -256,30 +261,27 @@ gc()
 
 
 
+
+
 # Standard error based on random sampling ---------------------------------
 
-SmallSurvey_randomdesign <- survfit(Surv(time, g121) ~ 1 , data=df,
+SmallSurvey_randomdesign    <- survfit(Surv(time, g121) ~ 1 , data=df,
                                     weight=wgt) # status 9 is converted to NA
 
-plot(SmallSurvey_randomdesign)
+ggsurvplot(SmallSurvey_randomdesign,
+           conf.int=TRUE,
+           ggtheme = theme_classic(),
+           legend = "none",
+           censor = FALSE)
 
-tables <- ggsurvtable(
-  
-  SmallSurvey_randomdesign,
-  data=df,
-  survtable = c("cumevents", "cumcensor",
-                "risk.table"),
-  break.time.by=1
-)
+tables <- surv_summary(SmallSurvey_randomdesign)
 
-data_weighted <- 
+nRisk[[i]]                   <- tables[, 2]
+nEvent[[i]]                  <- tables[, 3]
 
-nRisk[[i]]             <- tables$cumcensor$data[,3]
-nEvent[[i]]            <- tables$cumcensor$data[,5]
-
-SmallSurvey_random_conf <- setNames(data.frame(matrix(ncol = 2, nrow = 16)), c("lower_random","upper_random"))
-SmallSurvey_random_conf[,1] <- as.data.frame(SmallSurvey_randomdesign$lower)
-SmallSurvey_random_conf[,2] <- as.data.frame(SmallSurvey_randomdesign$upper)
+SmallSurvey_random_conf      <- setNames(data.frame(matrix(ncol = 2, nrow = 16)), c("lower_random","upper_random"))
+SmallSurvey_random_conf[, 1] <- as.data.frame(SmallSurvey_randomdesign$lower)
+SmallSurvey_random_conf[, 2] <- as.data.frame(SmallSurvey_randomdesign$upper)
 
 SmallSurvey_random[[i]] <- SmallSurvey_random_conf
 
@@ -287,9 +289,9 @@ SmallSurvey_random[[i]] <- SmallSurvey_random_conf
 
 # Results -----------------------------------------------------------------
 
-plot(SmallSurvivalList[[i]]) # Only if you managed to run survey package through KM estimates
-ConInList[[i]] # Only if you managed to run survey package through KM estimates
-SmallSurvey_random[[i]] # Confidence intervals for random sampling
+# plot(SmallSurvivalList[[i]]) # Only if you managed to run survey package through KM estimates
+# ConInList[[i]] # Only if you managed to run survey package through KM estimates
+# SmallSurvey_random[[i]] # Confidence intervals for random sampling
 nRisk[[i]]
 nEvent[[i]]
 dfList[[i]]
