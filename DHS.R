@@ -29,6 +29,7 @@ library(tidyverse)
 library(survey)
 library(foreign)
 library(reshape2)
+library(survminer)
 
 options(scipen = 999)  # disable scientific notation in R
 
@@ -37,7 +38,8 @@ options(scipen = 999)  # disable scientific notation in R
 # reference: http://faculty.washington.edu/tlumley/survey/example-lonely.html
 options(survey.lonely.psu = "adjust")
 
-setwd("~/rstudio")
+#setwd("~/rstudio")
+setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
 
 listdta <- dir(pattern = "*.DTA")
 
@@ -127,12 +129,14 @@ randomRows <- function(x,y){
 # ldf <- ReadListofDTA() 
 
 # create empty list to store results in loop
+dfList            <- list()
 SmallSurvivalList <- list()
 ConInList         <- list()
 SmallSurvey_random<- list()
+nRisk             <- list()
+nEvent            <- list()
 
-# for (i in 1:length(listdta)){
-i<- 2
+for (i in 1:length(listdta)){
 
 # for pcs with a lot of memory select one DHS stat file from list ldf created above
 # wide <- ldf[[i]]
@@ -207,24 +211,8 @@ df$wgt <- as.numeric(df$v005 / 1000000)
 df <- df %>%
   select(v021,v022,g121,time,wgt)
 
-# increase memory, is Windows specific, R server runs in Ubuntu
-# memory.limit(10000000) 
-
-dim(df)
-
-ifelse(i == 1 | i == 2 | i == 4 |
-         i == 5 | i == 6 | i == 7 |
-         i == 8, df <- randomRows(df,2500),df)
-
-dim(df)
-
-
-# create a small sample survey to calculate standard errors with taylor-series linearization
-SmallSurvey <- svydesign(id             = ~v021, 
-                         strata         = df$v022, 
-                         # variables      = ~g121 + time,
-                         weight         = df$wgt,
-                         data           = df)
+# Store dataframe df in a list for later use
+dfList[[i]]            <- df
 
 # free RAM for KM estimates, remove previous dataframes and objects
 rm(wide, wide_allchildren,long_allchildren, wide_fgm,long_fgm,time)
@@ -232,16 +220,40 @@ rm(wide, wide_allchildren,long_allchildren, wide_fgm,long_fgm,time)
 # garbage colleaction: clear up RAM
 gc()
 
+# Only enable if you have a super computer --------------------------------
+
+# increase memory, is Windows specific, R server runs in Ubuntu
+# memory.limit(10000000) 
+
+# This part was used to test, what datasets could be run. cut off is at roughly 7000 lines
+
+#dim(df)
+
+#ifelse(i == 1 | i == 2 | i == 4 | # Some 3,9 and 10 are excluded, as complex survey design runs fine with Cote dIvoire, Tanzania and Togo
+ #        i == 5 | i == 6 | i == 7 |
+  #       i == 8, df <- randomRows(df,2500),df)
+
+#dim(df)
+
+# create a small sample survey to calculate standard errors with taylor-series linearization
+#SmallSurvey <- svydesign(id             = ~v021, 
+ #                        strata         = df$v022, 
+                         # variables      = ~g121 + time,
+  #                       weight         = df$wgt,
+   #                      data           = df)
+
 # KM estimate
-SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
-SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
-plot(SmallSurvival)
+#SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
+#SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
+#plot(SmallSurvival)
 
 # Store standard errors
-ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
-ConInList[[i]] <- ses  
+#ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+#ConInList[[i]] <- ses  
 
-#}
+# From here, you can easly run the scrip again ----------------------------
+
+
 
 
 # Standard error based on random sampling ---------------------------------
@@ -251,20 +263,36 @@ SmallSurvey_randomdesign <- survfit(Surv(time, g121) ~ 1 , data=df,
 
 plot(SmallSurvey_randomdesign)
 
-SmallSurvey_random_conf <- setNames(data.frame(matrix(ncol = 2, nrow = 17)), c("lower_random","upper_random"))
+tables <- ggsurvtable(
+  
+  SmallSurvey_randomdesign,
+  data=df,
+  survtable = c("cumevents", "cumcensor",
+                "risk.table"),
+  break.time.by=1
+)
+
+data_weighted <- 
+
+nRisk[[i]]             <- tables$cumcensor$data[,3]
+nEvent[[i]]            <- tables$cumcensor$data[,5]
+
+SmallSurvey_random_conf <- setNames(data.frame(matrix(ncol = 2, nrow = 16)), c("lower_random","upper_random"))
 SmallSurvey_random_conf[,1] <- as.data.frame(SmallSurvey_randomdesign$lower)
 SmallSurvey_random_conf[,2] <- as.data.frame(SmallSurvey_randomdesign$upper)
 
 SmallSurvey_random[[i]] <- SmallSurvey_random_conf
 
+}
 
 # Results -----------------------------------------------------------------
 
-plot(SmallSurvivalList[[i]])
-ConInList[[i]]
-SmallSurvey_random[[i]]
-
-
+plot(SmallSurvivalList[[i]]) # Only if you managed to run survey package through KM estimates
+ConInList[[i]] # Only if you managed to run survey package through KM estimates
+SmallSurvey_random[[i]] # Confidence intervals for random sampling
+nRisk[[i]]
+nEvent[[i]]
+dfList[[i]]
 
 
 
