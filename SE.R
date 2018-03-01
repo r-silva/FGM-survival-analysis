@@ -34,55 +34,55 @@ Strata <- length(unique(dfList[[c]]$v022)) # Nr of strata
 
 # weight df with wgt (DHS sample weight/1000000) and use df from dfList for country i
 df_weight <- dfList[[c]] %>%
-  mutate(case = 1) # case = 1 if anyone sampled
-df_weight[, 3] <- df_weight[, 3]*dfList[[c]][, 5]
-df_weight[, 6] <- df_weight[, 6]*dfList[[c]][, 5]
+  filter(!is.na(time))
 
+df_weight[, 3] <- df_weight[, 3]*df_weight[, 5]
 
-# create new dataframe/matrix to store information relevant for se calculation
-data <- setNames(data.frame(matrix(ncol = 4, nrow = nrow(dfList[[c]]))), c("H","n","y","m"))
+colnames(df_weight)  <- c("n","H","g121","time","M")
 
-###
+# <- df_weight %>%
+ # mutate(y = ifelse(time == 1 & g121 != 0, g121, 0))%>%
+  #mutate(m = ifelse(time == 0 , 0, M))
 
-### ONLY SE FOR 0 correct, CENSORING AND EVENTS OUT OF REST TOO
+#colSums(test)
+
 
 for (j in 1:15){ # 0:14 years, fixed for every country
-  
-  j <- 15
+
   # create empty dataframe for se calculation
-  X <- nRisk[[3]][j]   # j year, takes into account censoring
-  R <- nEvent[[3]][j]/X # Estimate
+  X <- nRisk[[3]][j]    # j year, takes into account censoring
+  R <- nEvent[[3]][j]/X # Estimate of proportion/risk
   
-  # create data frame with nr of cases at time = 0 (we do not have to account for censoring at this point)
-  data_test <- data %>%
-    mutate(H = dfList[[c]]$v022) %>%
-    mutate(n = dfList[[c]]$v021) %>%
-    mutate(y = ifelse(df_weight$time == j, df_weight$g121,0)) %>% # we are nto looping yet, so ==0 
-    mutate(m = df_weight$case)# %>% # TAKE INTO ACCOUNT CENSORING
-  
+  # create data frame with nr of cases
+  data <- df_weight %>%
+    mutate(y = ifelse(time == (j - 1) & g121 != 0, g121, 0)) %>%     # Number of positive answers
+    mutate(m = ifelse(time == (j - 2), 0, M))      # At risk population by strata and cluster
+   # filter(m != 0)%>%
+    #filter(!is.na(m) | !is.na(y))
+
   # Generate z.hi matrix from DHS annex
-  data_test6 <- data_test %>%
+  z.hi <- data %>%
     group_by(n) %>%
     mutate(y.hi = sum(y, na.rm=TRUE)) %>%
     mutate(m.hi = sum(m, na.rm=TRUE)) %>%
     select(c("H","n","y.hi","m.hi"))
   
-  data_test6 <- data_test6[-which(duplicated(data_test6)), ]
+  z.hi <- z.hi[-which(duplicated(z.hi)), ]
   
-  data_test6  <- data_test6%>%
+  z.hi  <- z.hi%>%
     dplyr::mutate(new = y.hi - R*m.hi)%>%
     select(c("H","n","new"))%>%
     spread(n,new)%>%
     select(-H)
   
-  z.hi <- data_test6
+  z.hi <- z.hi
   z.hi[is.na(z.hi)] <- 0
   
   ################
   
   # Generate z.h matrix from DHS annex
   
-  data_test7 <- data_test %>%
+  data_test7 <- data %>%
     group_by(H) %>%
     mutate(y.h = sum(y, na.rm=TRUE)) %>%
     mutate(m.h = sum(m)) %>%
@@ -98,7 +98,7 @@ for (j in 1:15){ # 0:14 years, fixed for every country
   
   # Generate vector with number of cluster in every stratum
   
-  n <- data_test%>%
+  n <- data%>%
     group_by(H)%>%
     mutate(n.h = n_distinct(n))%>%
     select(c("H","n.h"))
