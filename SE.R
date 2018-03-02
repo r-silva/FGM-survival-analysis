@@ -30,79 +30,89 @@ listlower <- list(list())
 
 c <- 3
 
-Clusters <- length(unique(dfList[[c]]$v021))   # Nr of clusters
-Strata   <- length(unique(dfList[[c]]$v022))   # Nr of strata
+Clusters   <- length(unique(dfList[[c]]$v021))   # Nr of clusters
+Strata     <- length(unique(dfList[[c]]$v022))   # Nr of strata
+Strata_2   <- length(unique(dfList[[c]]$v023))   # Nr of strata_same as v022
+
+# write a stopif if Strata != Strata_2
 
 # weight df with wgt (DHS sample weight/1000000) and use df from dfList for country i
 
-df_weight <- dfList[[c]] %>%
-  filter(!is.na(time))
+df_unweight <- dfList[[c]] %>%
+  filter(!is.na(time))%>%
+  select(c("v021","v022","g121","time","wgt"))
 
-# try to recode
-df_weight <- df_weight %>%
-  mutate(try = ifelse(g121 == 1, 0, 1)) %>%
-  select(c("v021", "v022", "time", "wgt", "try"))
-
-df_weight[, 5] <- df_weight[, 5]*df_weight[, 4]
-
-colnames(df_weight)  <- c("n", "H", "time", "M", "g121")
-
-
+# Rename columns to coincide with DHS forumal in appendix m=clusters, H=Strata, M=weighted Nr of cases
+colnames(df_unweight)  <- c("m", "H", "g121", "time", "wgt")
 
 # Generate vector with number of cluster in every stratum
 
-n <- df_weight %>%
+m <- df_unweight %>%
   group_by(H)  %>%
-  mutate(n.h = n_distinct(n)) %>%
-  select(c("H","n.h"))
+  mutate(m.h = n_distinct(m)) %>%
+  select(c("H","m.h"))
 
-n <- as.data.frame(n[-which(duplicated(n)), ])
+m <- as.data.frame(m[-which(duplicated(m)), ])
 
-n <- n[order(n$H), ]
+m <- m[order(m$H), ]
 
 
 for (j in 1:15){ # 0:14 years, fixed for every country
 
-j <- 2
+
   # create empty dataframe for se calculation
   X <- nRisk[[3]][j]    # j year, takes into account censoring
   R <- nSurv[[3]][j]    # prob of surviving until age j-1
   
   # create data frame with nr of cases and 'positive answers'
-  data <- df_weight %>%
-    mutate(y = ifelse(time == (j - 1) & g121 != 0, g121, 0)) %>%     ##### Number of positive answers to surviving
+ 
+   data <- df_unweight %>%
     
-    mutate(x = ifelse(  time == (j - 2)  & time == (j - 3)  &
-                        time == (j - 4)  & time == (j - 5)  & time == (j - 6)  &
-                        time == (j - 7)  & time == (j - 8)  & time == (j - 9)  &
-                        time == (j - 10) & time == (j - 11) & time == (j - 12) &
-                        time == (j - 13) & time == (j - 14), 0, M)) %>%      # At risk population by strata and cluster
-    filter(x != 0)
+    mutate(y      = ifelse( (time == (j - 1) & g121 == 0) |
+                             time > (j - 1), 1, 0)) %>%     ##### Number of positive answers to surviving
+    
+    mutate(event  = ifelse( time == (j - 1) & g121 == 1, 1, 0))%>%
+    
+    mutate(censor = ifelse( time == (j - 1) & g121 == 0, 1, 0))%>%
+     
+    mutate(x = ifelse( time == (j - 2)  | time == (j - 3)  |
+                       time == (j - 4)  | time == (j - 5)  | time == (j - 6)  &
+                       time == (j - 7)  | time == (j - 8)  | time == (j - 9)  &
+                       time == (j - 10) | time == (j - 11) | time == (j - 12) &
+                       time == (j - 13) | time == (j - 14) | time == (j - 15),
+                       0, 1)) #%>%      # At risk population by strata and cluster
 
+   data$y <- data$y*data$wgt
+   data$x <- data$x*data$wgt
+   data$event <- data$event*data$wgt
+   data$censor <- data$censor*data$wgt
+   
+   colSums(data)
+   
 # Generate z.hi matrix from DHS annex
   
   z.hi <- data %>%
-    group_by(n) %>%
+    group_by(m) %>%
     mutate(y.hi = sum(y, na.rm=TRUE)) %>%
     mutate(x.hi = sum(x, na.rm=TRUE)) %>%
-    select(c("H","n","y.hi","x.hi"))
+    select(c("H","m","y.hi","x.hi"))
   
   z.hi <- z.hi[-which(duplicated(z.hi)), ]
 
  # z.hi  <- z.hi%>%
    # dplyr::mutate(new = y.hi - R*x.hi)%>%
-    #select(c("H","n","new"))%>%
+    #select(c("H","m","new"))%>%
    # spread(n,new)
   #z.hi[is.na(z.hi)] <- 0
   
   y.hi <- z.hi %>%
-  select(c("H","n","y.hi"))  %>%
-  spread(n,y.hi)
+  select(c("H","m","y.hi"))  %>%
+  spread(m,y.hi)
   y.hi[is.na(y.hi)] <- 0
   
  x.hi <- z.hi %>%
-     select(c("H","n","x.hi"))  %>%
-     spread(n,x.hi)
+     select(c("H","m","x.hi"))  %>%
+     spread(m,x.hi)
   x.hi[is.na(x.hi)] <- 0
   
 
@@ -114,28 +124,25 @@ j <- 2
    group_by(H) %>%
    mutate(y.h = sum(y, na.rm=TRUE)) %>%
    mutate(x.h = sum(x)) %>%
-   mutate(n.h = n_distinct(n))%>%
-   select(c("H","y.h","x.h","n.h"))#%>%
-   #mutate(new = (y.h - R*x.h)/n.h)%>%
+   mutate(m.h = n_distinct(m))%>%
+   select(c("H","y.h","x.h","m.h"))#%>%
+   #mutate(new = (y.h - R*x.h)/m.h)%>%
    #select(c("H","new"))
    #z.h <- as.data.frame(z.h[-which(duplicated(z.h)), ])
    #z.h <- z.h[order(z.h$H),]
-   
+  colSums(z.h) 
+  
   y.h <- z.h %>%
    select(c("H","y.h"))%>%
    group_by(H)
   y.h <- as.data.frame(y.h[-which(duplicated(y.h)), ])
   y.h <- y.h[order(y.h$H),]
-  
+
   x.h <- z.h %>%
    select(c("H","x.h"))%>%
    group_by(H)
   x.h <- as.data.frame(x.h[-which(duplicated(x.h)), ])
   x.h <- x.h[order(x.h$H),]
-  
-  
-
-  
   
 # Calculation se using Taylor linearization, 
   
@@ -153,7 +160,7 @@ j <- 2
   
   }
   
-   temp.b[h] <- (n[h,2]/(n[h,2]-1))*(rowSums(temp.a, na.rm = T)[h]-(((y.h[h,2] - R*x.h[h,2]))^2)/n[h,2])
+   temp.b[h] <- (m[h,2]/(m[h,2]-1))*(rowSums(temp.a, na.rm = T)[h]-(((y.h[h,2] - R*x.h[h,2]))^2)/m[h,2])
   
   }
 
@@ -194,12 +201,15 @@ j <- 2
   var.p <- (1/X^2)*sum(temp.b) # remove x^2
   se <- sqrt(var.p) 
   
-se
+
 
 # Store Ses and confidence intervals in lists
 
 listSec[[j]]     <- se # when full loop will run, remove 1 and put c
 }
+
+listSec
+
 
 listSe[[c]]   <- listSec
 listupper[[c]][j]  <- R + 1.96*se # when full loop will run, remove 1 and put c

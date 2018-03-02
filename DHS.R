@@ -211,7 +211,7 @@ df$wgt <- as.numeric(df$v005 / 1000000)
 
 # Reduce df to only absolutely necessary variables and records
 df <- df %>%
-  select(v021,v022,g121,time,wgt)
+  select(v021,v022,v023,g121,time,wgt)
 
 # Store dataframe df in a list for later use
 dfList[[i]]            <- df
