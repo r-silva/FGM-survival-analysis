@@ -129,12 +129,13 @@ randomRows <- function(x,y){
 # ldf <- ReadListofDTA() 
 
 # create empty list to store results in loop
-dfList            <- list()
-SmallSurvivalList <- list()
-ConInList         <- list()
-SmallSurvey_random<- list()
-nRisk             <- list()
-nEvent            <- list()
+dfList             <- list()
+SmallSurvivalList  <- list()
+ConInList          <- list()
+SmallSurvey_random <- list()
+nRisk              <- list()
+nEvent             <- list()
+nSurv              <- list() 
 
 for (i in 1:length(listdta)){
 
@@ -222,9 +223,6 @@ rm(wide, wide_allchildren,long_allchildren, wide_fgm,long_fgm,time)
 gc()
 
 
-
-
-
 # Only enable if you have a super computer --------------------------------
 
 # increase memory, is Windows specific, R server runs in Ubuntu
@@ -259,10 +257,6 @@ gc()
 # From here, you can easly run the scrip again ----------------------------
 
 
-
-
-
-
 # Standard error based on random sampling ---------------------------------
 
 SmallSurvey_randomdesign    <- survfit(Surv(time, g121) ~ 1 , data=df,
@@ -278,6 +272,7 @@ tables <- surv_summary(SmallSurvey_randomdesign)
 
 nRisk[[i]]                   <- tables[, 2]
 nEvent[[i]]                  <- tables[, 3]
+nSurv[[i]]                  <- tables[, 5]
 
 SmallSurvey_random_conf      <- setNames(data.frame(matrix(ncol = 2, nrow = 16)), c("lower_random","upper_random"))
 SmallSurvey_random_conf[, 1] <- as.data.frame(SmallSurvey_randomdesign$lower)
