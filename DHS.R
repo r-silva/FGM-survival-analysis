@@ -137,8 +137,8 @@ nRisk              <- list()
 nEvent             <- list()
 nSurv              <- list() 
 
-for (i in 1:length(listdta)){
-
+#for (i in 1:length(listdta)){
+i <- 9
   
 # for pcs with a lot of memory select one DHS stat file from list ldf created above
 # wide <- ldf[[i]]
@@ -211,7 +211,8 @@ df$wgt <- as.numeric(df$v005 / 1000000)
 
 # Reduce df to only absolutely necessary variables and records
 df <- df %>%
-  select(v021,v022,v023,g121,time,wgt)
+  select(v021,v022,v023,g121,time,wgt)%>%
+  filter(time <= 15)
 
 # Store dataframe df in a list for later use
 dfList[[i]]            <- df
@@ -274,13 +275,14 @@ nRisk[[i]]                   <- tables[, 2]
 nEvent[[i]]                  <- tables[, 3]
 nSurv[[i]]                  <- tables[, 5]
 
-SmallSurvey_random_conf      <- setNames(data.frame(matrix(ncol = 2, nrow = 16)), c("lower_random","upper_random"))
-SmallSurvey_random_conf[, 1] <- as.data.frame(SmallSurvey_randomdesign$lower)
-SmallSurvey_random_conf[, 2] <- as.data.frame(SmallSurvey_randomdesign$upper)
+SmallSurvey_random_conf      <- setNames(data.frame(matrix(ncol = 3, nrow = 16)), c("se","lower_random","upper_random"))
+SmallSurvey_random_conf[, 2] <- as.data.frame(SmallSurvey_randomdesign$lower)
+SmallSurvey_random_conf[, 3] <- as.data.frame(SmallSurvey_randomdesign$upper)
+SmallSurvey_random_conf[, 1] <- as.data.frame(SmallSurvey_randomdesign$std.err)
 
 SmallSurvey_random[[i]] <- SmallSurvey_random_conf
 
-}
+#}
 
 # Results -----------------------------------------------------------------
 
