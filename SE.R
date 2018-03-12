@@ -14,7 +14,8 @@
 
 # Source codes, libraries, global options and working directory -----------
 
-setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/FGM survival analysis")
+#setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/FGM survival analysis")
+setwd("C:/Users/Kathrin Weny/Google Drive (weny@unfpa.org)/2018/FGM/01 -Survival Analysis/FGM survival analysis")
 
 source("DHS.R") 
 
@@ -26,9 +27,7 @@ listlower <- list(list())
 
 # Standard errors (manual) ------------------------------------------------
 
-# for (c in 1:length(listdta)){ 
-
-c <- 9
+for (c in 1:length(listdta)){ 
 
 Clusters   <- length(unique(dfList[[c]]$v021))   # Nr of clusters
 Strata     <- length(unique(dfList[[c]]$v022))   # Nr of strata used for standard error calculation
@@ -162,16 +161,14 @@ for (j in 1:15){ # 0:14 years, fixed for every country
   
   # Store Ses and confidence intervals in lists
   
-  listSec[[j]]     <- se # when full loop will run, remove 1 and put c
-}
 
-listSec
+listSec[[j]]     <- se # when full loop will run, remove 1 and put c
 
 listSe[[c]]   <- listSec
-listupper[[c]][j]  <- R + 1.96*se # when full loop will run, remove 1 and put c
-listlower[[c]][j]  <- R - 1.96*se # when full loop will run, remove 1 and put c
+#listupper[[c]][j]  <- R + 1.96*se # when full loop will run, remove 1 and put c
+#listlower[[c]][j]  <- R - 1.96*se # when full loop will run, remove 1 and put c
 
 
-#} # loop over ages ends
+} # loop over ages ends
 
-#} # loop over countries ends
+} # loop over countries ends

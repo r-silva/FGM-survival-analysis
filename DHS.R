@@ -30,6 +30,7 @@ library(survey)
 library(foreign)
 library(reshape2)
 library(survminer)
+library(data.table)
 
 options(scipen = 999)  # disable scientific notation in R
 
@@ -39,7 +40,9 @@ options(scipen = 999)  # disable scientific notation in R
 options(survey.lonely.psu = "adjust")
 
 #setwd("~/rstudio")
-setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
+
+#setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
+setwd("C:/Users/Kathrin Weny/Google Drive (weny@unfpa.org)/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
 
 listdta <- dir(pattern = "*.DTA")
 
@@ -137,8 +140,8 @@ nRisk              <- list()
 nEvent             <- list()
 nSurv              <- list() 
 
-#for (i in 1:length(listdta)){
-i <- 9
+for (i in 1:length(listdta)){
+
   
 # for pcs with a lot of memory select one DHS stat file from list ldf created above
 # wide <- ldf[[i]]
@@ -247,13 +250,13 @@ gc()
    #                      data           = df)
 
 # KM estimate
-#SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
-#SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
-#plot(SmallSurvival)
+# SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
+# SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
+# plot(SmallSurvival)
 
 # Store standard errors
-#ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
-#ConInList[[i]] <- ses  
+# ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+# ConInList[[i]] <- ses  
 
 # From here, you can easly run the scrip again ----------------------------
 
@@ -280,19 +283,15 @@ SmallSurvey_random_conf[, 2] <- as.data.frame(SmallSurvey_randomdesign$lower)
 SmallSurvey_random_conf[, 3] <- as.data.frame(SmallSurvey_randomdesign$upper)
 SmallSurvey_random_conf[, 1] <- as.data.frame(SmallSurvey_randomdesign$std.err)
 
-SmallSurvey_random[[i]] <- SmallSurvey_random_conf
+SmallSurvey_random[[i]]     <- SmallSurvey_random_conf
 
-#}
+
+
+}
 
 # Results -----------------------------------------------------------------
 
-# plot(SmallSurvivalList[[i]]) # Only if you managed to run survey package through KM estimates
-# ConInList[[i]] # Only if you managed to run survey package through KM estimates
-# SmallSurvey_random[[i]] # Confidence intervals for random sampling
-nRisk[[i]]
-nEvent[[i]]
-dfList[[i]]
+names(SmallSurvey_random)<- listdta
 
 
-
-
+SmallSurvey_random[11]
