@@ -294,4 +294,4 @@ SmallSurvey_random[[i]]     <- SmallSurvey_random_conf
 names(SmallSurvey_random)<- listdta
 
 
-SmallSurvey_random[11]
+SmallSurvey_random[1]

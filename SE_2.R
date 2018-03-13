@@ -29,7 +29,7 @@ data <- data.frame(matrix(NA, nrow = 14, ncol = 4))
 names(data) <- c("me", "se", "confint_low", "confint_high")
 
 #for (c in 1:length(listdta)){ # start loop through countries
- c <- 11
+ c <- 1
 
    df <- dfList[[c]] %>%
     filter(!is.na(time))%>%
@@ -40,7 +40,7 @@ names(data) <- c("me", "se", "confint_low", "confint_high")
      # subset data frame: Throw out everybody who was censored before year j
      # Create new variable of women who have survived at age j
     df <- df %>%
-      filter(time >= j | (time < j & g121 == 1)) %>% # remove censoring
+      filter(time >= j) %>% # | (time <= j & g121 == 1)) %>% # Population at risk, so we filter all girls that were censored in previous periods
      mutate(interest = ifelse((time > j) | (time == j & g121 == 0 ), 1, 0)) # survivors until time j
     # mutate(interest = ifelse(time<=j & g121 == 1, 1, 0))
     survey <- svydesign(id             = ~v021, 
@@ -48,16 +48,16 @@ names(data) <- c("me", "se", "confint_low", "confint_high")
                          weight         = df$wgt,
                          data           = df)
     
-    a <- svymean(~interest, survey, deff=TRUE, na.rm=FALSE)
+    a <- svymean(~interest, survey, deff=TRUE, na.rm=FALSE) # propability of surviving this round
 
     
-    data[j,1] <- as.numeric(a[1])
+    data[j,1] <- as.numeric(a[1])*(ifelse(j == 1, 1, data[j-1,1]))
     data[j,2] <- as.numeric(sqrt(attributes(a)$var))
     data[j,3] <- confint(a)[[1]]
     data[j,4] <- confint(a)[[2]]
     
    }
-  data 1- 0.9918613
+  data
 output[[c]] <- data   
    
    
