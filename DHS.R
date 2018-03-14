@@ -32,6 +32,8 @@ library(reshape2)
 library(survminer)
 library(data.table)
 
+
+
 options(scipen = 999)  # disable scientific notation in R
 
 #if a primary sapling unit has only a single observation, R will crash
@@ -41,8 +43,8 @@ options(survey.lonely.psu = "adjust")
 
 #setwd("~/rstudio")
 
-#setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
-setwd("C:/Users/Kathrin Weny/Google Drive (weny@unfpa.org)/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
+setwd("C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
+#setwd("C:/Users/Kathrin Weny/Google Drive (weny@unfpa.org)/2018/FGM/01 -Survival Analysis/03 -Data/DHS")
 
 listdta <- dir(pattern = "*.DTA")
 
@@ -140,8 +142,8 @@ nRisk              <- list()
 nEvent             <- list()
 nSurv              <- list() 
 
-for (i in 1:length(listdta)){
-
+#for (i in 1:length(listdta)){
+i <- 4
   
 # for pcs with a lot of memory select one DHS stat file from list ldf created above
 # wide <- ldf[[i]]
@@ -230,7 +232,7 @@ gc()
 # Only enable if you have a super computer --------------------------------
 
 # increase memory, is Windows specific, R server runs in Ubuntu
-# memory.limit(10000000) 
+ memory.limit(10000000) 
 
 # This part was used to test, what datasets could be run. cut off is at roughly 7000 lines
 
@@ -243,21 +245,38 @@ gc()
 #dim(df)
 
 # create a small sample survey to calculate standard errors with taylor-series linearization
-#SmallSurvey <- svydesign(id             = ~v021, 
- #                        strata         = df$v022, 
-                         # variables      = ~g121 + time,
-  #                       weight         = df$wgt,
-   #                      data           = df)
+SmallSurvey <- svydesign(id             = ~v021, 
+                         strata         = df$v022, 
+                         variables      = ~g121 + time,
+                         weight         = df$wgt,
+                         data           = df)
 
 # KM estimate
-# SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
-# SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
-# plot(SmallSurvival)
+SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
+SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
 
-# Store standard errors
-# ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
-# ConInList[[i]] <- ses  
+# visualization
+str(SmallSurvival)
 
+plot(SmallSurvival, main ="KM estimates for Burkina Faso",
+  xlab = "Study time", ylab = "Probability of not experiencing FGM")
+  axis(1, at=1:15, labels=1:15)
+  legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
+         col=c("black", "black"), lty=1:2)
+  title(sub = "Data: DHS 2010", adj=1, line=4, font=3)
+ 
+plot(sqrt(SmallSurvival[[3]]), main = "Standard Errors of Kaplan-Meier Estimates",
+     xlab = "FGM Cases", ylab = "Standard Errors", cex = 0.5)
+
+
+# Save Standard Errors
+a <- as.data.table(sqrt(SmallSurvival$varlog))
+
+# Store Confidence Intervals
+ ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+ ConInList[[i]] <- ses  
+ ses
+ 
 # From here, you can easly run the scrip again ----------------------------
 
 
@@ -287,7 +306,7 @@ SmallSurvey_random[[i]]     <- SmallSurvey_random_conf
 
 
 
-}
+#}
 
 # Results -----------------------------------------------------------------
 
