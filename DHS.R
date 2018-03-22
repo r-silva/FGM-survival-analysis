@@ -143,7 +143,7 @@ nEvent             <- list()
 nSurv              <- list() 
 
 #for (i in 1:length(listdta)){
-i <- 4
+for (i in c(4,6)){ #I am rewriting the loop in this way, as  I have been able to run all countries besides Guinea ( i <- 6) and Egypt (i <- 4)
   
 # for pcs with a lot of memory select one DHS stat file from list ldf created above
 # wide <- ldf[[i]]
@@ -250,20 +250,21 @@ SmallSurvey <- svydesign(id             = ~v021,
                          variables      = ~g121 + time,
                          weight         = df$wgt,
                          data           = df)
+summary(SmallSurvey)
 
+SmallSurvey$variables
 # KM estimate
 SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
 SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
 
 # visualization
-str(SmallSurvival)
 
-plot(SmallSurvival, main ="KM estimates for Burkina Faso",
-  xlab = "Study time", ylab = "Probability of not experiencing FGM")
+plot(SmallSurvival, main ="KM estimates for Ethiopia",
+  xlab = "Study time", ylab = "Probability of not experiencing FGM") 
   axis(1, at=1:15, labels=1:15)
   legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
          col=c("black", "black"), lty=1:2)
-  title(sub = "Data: DHS 2010", adj=1, line=4, font=3)
+  title(sub = "Data: DHS 2016", adj=1, line=4, font=3)
  
 plot(sqrt(SmallSurvival[[3]]), main = "Standard Errors of Kaplan-Meier Estimates",
      xlab = "FGM Cases", ylab = "Standard Errors", cex = 0.5)
@@ -271,6 +272,8 @@ plot(sqrt(SmallSurvival[[3]]), main = "Standard Errors of Kaplan-Meier Estimates
 
 # Save Standard Errors
 a <- as.data.table(sqrt(SmallSurvival$varlog))
+
+write.table(a, "C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/05b -Uncertainty/ethiopia_se.csv")
 
 # Store Confidence Intervals
  ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
@@ -306,7 +309,7 @@ SmallSurvey_random[[i]]     <- SmallSurvey_random_conf
 
 
 
-#}
+}
 
 # Results -----------------------------------------------------------------
 
