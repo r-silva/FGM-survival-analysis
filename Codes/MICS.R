@@ -121,9 +121,219 @@ randomRows <- function(x,y){
 }
 
 
+# Lists -------------------------------------------------------------------
+
+ConInList          <- list()
+
 # Executed statements -----------------------------------------------------
 
-
 # Benin -------------------------------------------------------------------
+
+df <- ReadSingleDTA(1) %>%
+  mutate(id = 1)
+
+# Recode variables of interest 
+
+df$FG13 <- as.numeric(as.character(df$FG13))#Age of daughter
+
+df$FG16 <- as.numeric(as.character(df$FG16))#Age of daughter at circumcisison
+
+df[,'FG15'] <- as.character(df[,'FG15'])#Daughter circumcised or not
+df <- df %>%
+  mutate(fgm_status = ifelse(as.character(df$FG15)== "Non", 0,
+                             ifelse(as.character(df$FG15) =="Oui",1,NA)))
+
+
+time <- ifelse(df$fgm_status == 0, df$FG13,
+               ifelse(df$fgm_status==1,df$FG16,NA))
+time <- as.integer(time)
+
+unique(df$fgm_status)
+unique(df$time)
+
+df <- df%>%
+  mutate(time=time)
+
+# Bring in complex survey format
+
+dhs_design <- svydesign(id = ~HH1 + ~HH2, #primary and secondary sampling units, reference: https://rpubs.com/trjohns/survey-cluster
+                        weights = ~wmweight, #weight expressed in 6 decimals
+                        data = df)
+
+# Without standard errors (we can use full data set)
+s1 <- svykm(Surv(time, fgm_status>0) ~1, design=dhs_design, se = T)
+
+# Plot
+
+a <- c(14,15)
+b <- c(0.9854752 , 0.9854752)
+c <- c(0.99248095, 0.99248095)
+d <- c(0.9994867 , 0.9994867)
+
+ab <- data.frame(a,b)
+ac <- data.frame(a,c)
+ad <- data.frame(a,d)
+
+plot(s1, main = "KM estimates for Benin",
+     xlab = "Study time", ylab = "Probability of not experiencing FGM", xlim = c(0,15),
+     ylim = c(0.96,1)) 
+axis(1, at = 1:15, labels = 1:15)
+lines(ab, lty = 2)
+lines(ac)
+lines(ad, lty = 2)
+legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
+       col=c("black", "black"), lty = 1:2)
+title(sub = "Data: MICS 2014", adj = 1, line = 4, font = 3)
+
+# Standard errors
+
+ses <- confint(s1, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,15), level = 0.95)
+ConInList[[1]] <- ses  
+ses
+
+
+# Central African Republic ------------------------------------------------
+
+df <- ReadSingleDTA(2) %>%
+  mutate(id = 1)
+
+# Recode variables of interest 
+
+df$FG13 <- as.numeric(as.character(df$FG13))#Age of daughter
+
+df$FG16 <- as.numeric(as.character(df$FG16))#Age of daughter at circumcisison
+
+df[,'FG15'] <- as.character(df[,'FG15'])#Daughter circumcised or not
+df <- df %>%
+  mutate(fgm_status = ifelse(as.character(df$FG15)== "Non", 0,
+                             ifelse(as.character(df$FG15) =="Oui",1,NA)))
+
+# Create time to event or time to censoring variable
+
+time <- ifelse(df$fgm_status == 0, df$FG13,
+               ifelse(df$fgm_status == 1, df$FG16, NA))
+
+time <- as.integer(time)
+
+df <- df%>%
+  mutate(time=time)
+
+# Bring in complex survey format
+
+dhs_design <- svydesign(id = ~HH1 + ~HH2, #primary and secondary sampling units, reference: https://rpubs.com/trjohns/survey-cluster
+                        weights = ~WMWEIGHT, #weight expressed in 6 decimals
+                        data = df)
+
+# KM estimates
+s2 <- svykm(Surv(time, fgm_status>0) ~1, design=dhs_design, se = T)
+
+# Plot
+
+a <- c(0, 1, 2, 3)
+b <- c(1, 1, 1, 1)
+
+ab <- data.frame(a,b)
+
+c <- c(14,15)
+d <- c(0.9055838 , 0.9055838)
+e <- c(0.92524715, 0.92524715)
+f <- c(0.9449105 , 0.9449105)
+
+cd <- data.frame(c,d)
+ce <- data.frame(c,e)
+cf <- data.frame(c,f)
+
+
+plot(s2, main = "KM estimates for Central African Republic",
+     xlab = "Study time", ylab = "Probability of not experiencing FGM", xlim = c(0,15))
+axis(1, at = 1:15, labels = 1:15)
+lines(ab)
+lines(cd, lty=2)
+lines(ce)
+lines(cf, lty=2)
+legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
+       col=c("black", "black"), lty = 1:2)
+title(sub = "Data: MICS 2010", adj = 1, line = 4, font = 3)
+
+# Standard errors
+
+ses <- confint(s2, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,15), level = 0.95)
+ConInList[[2]] <- ses  
+ses
+
+
+# Ghana -------------------------------------------------------------------
+
+df <- ReadSingleDTA(3) %>%
+  mutate(id = 1)
+
+# Recode variables of interest 
+
+df$FG13 <- as.numeric(as.character(df$FG13))#Age of daughter
+
+df$FG16 <- as.numeric(as.character(df$FG16))#Age of daughter at circumcisison
+
+unique(df$FG15)
+df[,'FG15'] <- as.character(df[,'FG15'])#Daughter circumcised or not
+df <- df %>%
+  mutate(fgm_status = ifelse(as.character(df$FG15)== "No", 0,
+                             ifelse(as.character(df$FG15) =="Yes",1,NA)))
+
+# Create time to event or time to censoring variable
+
+time <- ifelse(df$fgm_status == 0, df$FG13,
+               ifelse(df$fgm_status==1,df$FG16,"na"))
+time <- as.integer(time)
+
+df <- df%>%
+  mutate(time = time)
+
+#Bring in complex survey format
+
+dhs_design <- svydesign(id = ~HH1 + HH2, #primary and secondary sampling units,
+                        weights = df$wmweight, #weight expressed in 6 decimals
+                        data = df)
+
+# KM estimates
+s3 <- svykm(Surv(time, fgm_status>0) ~1, design=dhs_design, se = T)
+
+# plot 
+a <- c(12, 13, 14, 15)
+b <- c(0.9904473 , 0.9904473 , 0.9904473, 0.9904473)
+c <- c(0.99309185, 0.99309185, 0.99309185, 0.99309185)
+d <- c(0.9957364 , 0.9957364 , 0.9957364, 0.9957364)
+
+ab <- data.frame(a,b)
+ac <- data.frame(a,c)
+ad <- data.frame(a,d)
+
+plot(s3, main = "KM estimates for Ghana",
+     xlab = "Study time", ylab = "Probability of not experiencing FGM", xlim = c(0,15))
+axis(1, at = 1:15, labels = 1:15)
+lines(ab, lty = 2)
+lines(ac)
+lines(ad, lty = 2)
+legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
+       col=c("black", "black"), lty = 1:2)
+title(sub = "Data: MICS 2011", adj = 1, line = 4, font = 3)
+
+# Zoom
+
+plot(s3, main = "KM estimates for Ghana",
+     xlab = "Study time", ylab = "Probability of not experiencing FGM", xlim = c(0,15),
+     ylim = c(0.96,1))
+axis(1, at = 1:15, labels = 1:15)
+lines(ab, lty = 2)
+lines(ac)
+lines(ad, lty = 2)
+legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
+       col=c("black", "black"), lty = 1:2)
+title(sub = "Data: MICS 2011", adj = 1, line = 4, font = 3)
+
+# Standard errors
+
+ses <- confint(s3, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,15), level = 0.95)
+ConInList[[3]] <- ses  
+ses
 
 
