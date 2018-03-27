@@ -174,7 +174,7 @@ plot1 <-  plot(s1, main ="KM estimates for Gambia",
           col=c("black", "black"), lty=1:2)
           title(sub = "Data: DHS 2013", adj=1, line=4, font=3)
 
-ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+ses <- confint(s1, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), level = 0.95)
 ses
 ConInList[[i]] <- ses  
 
@@ -239,15 +239,26 @@ memory.limit(10000000)
 gc()
 
 s2 <- svykm(Surv(time,g102>0)~1,design=dhs_design,se=T)
+a <- c(15,16,17,18,19)
+b <- c(0.9307951,0.9307951,0.9307951,0.9307951,0.9307951)
+c <- c(0.9795378,0.9795378,0.9795378,0.9795378,0.9795378)
+d <- c(0.95516645,0.95516645,0.95516645,0.95516645,0.95516645)
+
+df <- data.frame(a,b)
+df1 <- data.frame(a,c)
+df2 <- data.frame(a,d)
 
 plot2 <-  plot(s2, main ="KM estimates for Niger",
-          xlab = "Study time", ylab = "Probability of not experiencing FGM") 
+          xlab = "Study time", ylab = "Probability of not experiencing FGM",xlim = c(0,19)) 
           axis(1, at=1:19, labels=1:19)
+          lines(df, lty=2)
+          lines(df1, lty=2)
+          lines(df2, lty=1)
           legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
           col=c("black", "black"), lty=1:2)
           title(sub = "Data: DHS 2012", adj=1, line=4, font=3)
 
-ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+ses <- confint(s2, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), level = 0.95)
 ses
 ConInList[[i]] <- ses  
 
@@ -295,7 +306,7 @@ memory.limit(10000000)
 # garbage colleaction: clear up RAM
 gc()
 
-s3 <- svykm(Surv(time,g102>0)~1,design=dhs_design,se=FALSE)
+s3 <- svykm(Surv(time,g102>0)~1,design=dhs_design,se=T)
 
 plot3 <-  plot(s3, main ="KM estimates for Yemen",
           xlab = "Study time", ylab = "Probability of not experiencing FGM") 
@@ -304,7 +315,7 @@ plot3 <-  plot(s3, main ="KM estimates for Yemen",
           col=c("black", "black"), lty=1:2)
           title(sub = "Data: DHS 2013", adj=1, line=4, font=3)
 
-ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+ses <- confint(s3, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), level = 0.95)
 ses
 ConInList[[i]] <- ses  
 
