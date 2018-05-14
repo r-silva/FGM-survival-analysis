@@ -63,12 +63,14 @@ CalculateTimetoEvent <- function(x,y,z){
   #Returns:
   # new dataframe with time to event column
   
-  time <- ifelse(x == 0, z, ifelse(x == 1, y, NA))
-  
-  time <- as.numeric(time)
-  
-  return(time)
-  
+  time <- ifelse(x == 0, 
+                 z, 
+                 ifelse(x == 1, 
+                        y, 
+                        NA)
+                )
+  time <- as.numeric(time)  
+  return(time)  
 }
 
 ReadListofDTA <- function(x){
@@ -83,7 +85,8 @@ ReadListofDTA <- function(x){
   ldf <- list() # creates a list
   
   for (k in 1 : length(listdta)){
-    ldf[[k]] <- read.dta(listdta[k], convert.factors = FALSE)
+    ldf[[k]] <- read.dta(listdta[k], 
+                         convert.factors = FALSE)
   }
   
   names(ldf) <- x
@@ -170,7 +173,13 @@ wide_fgm <- wide %>%
 
 
 # reshape FGM module
-long_fgm <- reshape(wide_fgm, varying = c(3:102), direction = "long", idvar = "caseid", sep = "_", timevar = "order")
+long_fgm <- reshape(wide_fgm, 
+                    varying = c(3:102), 
+                    direction = "long", 
+                    idvar = "caseid", 
+                    sep = "_", 
+                    timevar = "order"
+                   )
 
 # delete order
 long_fgm <- long_fgm %>%
@@ -185,21 +194,33 @@ long_fgm <- long_fgm %>%
 
 # reshape ALL CHILDREN
 
-long_allchildren <- reshape(wide_allchildren, varying = c(10:69), direction = "long", idvar = "caseid", sep = "_", timevar="order")
+long_allchildren <- reshape(wide_allchildren, 
+                            varying = c(10:69), 
+                            direction = "long", 
+                            idvar = "caseid", 
+                            sep = "_", 
+                            timevar="order")
 
 # create ID for merge
 long_allchildren <- long_allchildren %>%
-  mutate(id.match = paste(caseid, order, sep = ""))
+  mutate(id.match = paste(caseid, 
+                          order, 
+                          sep = "")
+        )
 
 # merge data sets
 
-df <- merge(long_fgm, long_allchildren, by = "id.match")
+df <- merge(long_fgm, 
+            long_allchildren, 
+            by = "id.match")
 
 colnames(df)[2] <- "caseid"
 
 # add time to event column
 
-time <- CalculateTimetoEvent(df$g121, df$g122, df$b8)
+time <- CalculateTimetoEvent(df$g121, 
+                             df$g122, 
+                             df$b8)
 
 df <- df %>%
   mutate(time = time)
@@ -209,21 +230,29 @@ df <- df %>%
   mutate(id = 1)
 
 #NAs
-df$time <- ifelse(df$time == 98 | df$time == 99, NA, df$time)
+df$time <- ifelse(df$time == 98 | 
+                  df$time == 99, 
+                  NA, 
+                  df$time)
 
 # create weight variable from v005
 df$wgt <- as.numeric(df$v005 / 1000000)
 
 # Reduce df to only absolutely necessary variables and records
 df <- df %>%
-  select(v021,v022,v023,g121,time,wgt)%>%
+  select(v021,v022,v023,g121,time,wgt) %>%
   filter(time <= 15)
 
 # Store dataframe df in a list for later use
 dfList[[i]]            <- df
 
 # free RAM for KM estimates, remove previous dataframes and objects
-rm(wide, wide_allchildren,long_allchildren, wide_fgm,long_fgm,time)
+rm(wide, 
+   wide_allchildren,
+   long_allchildren, 
+   wide_fgm,
+   long_fgm,
+   time)
 
 # garbage colleaction: clear up RAM
 gc()
@@ -254,21 +283,40 @@ summary(SmallSurvey)
 
 SmallSurvey$variables
 # KM estimate
-SmallSurvival <- svykm(Surv(time, g121 > 0) ~ 1, design = SmallSurvey, se = TRUE)
+SmallSurvival <- svykm(Surv(time, 
+                            g121 > 0) ~ 1, 
+                       design = SmallSurvey, 
+                       se = TRUE
+                      )
 SmallSurvivalList[[i]] <- SmallSurvival  # store survival object in list
 
 # visualization
 
-plot(SmallSurvival, main ="KM estimates for Ethiopia",
-  xlab = "Study time", ylab = "Probability of not experiencing FGM") 
-  axis(1, at=1:15, labels=1:15)
-  legend(0, 0.2, legend=c("KM estimate", "95% confidence interval"),
-         col=c("black", "black"), lty=1:2)
-  title(sub = "Data: DHS 2016", adj=1, line=4, font=3)
+plot(SmallSurvival, 
+     main ="KM estimates for Ethiopia",
+     xlab = "Study time", 
+     ylab = "Probability of not experiencing FGM"
+    ) 
+  axis(1, 
+       at=1:15, 
+       labels=1:15)
+  legend(0, 
+         0.2, 
+         legend=c("KM estimate", 
+                  "95% confidence interval"),
+         col=c("black", 
+               "black"), 
+         lty=1:2)
+  title(sub = "Data: DHS 2016", 
+        adj=1, 
+        line=4, 
+        font=3)
  
-plot(sqrt(SmallSurvival[[3]]), main = "Standard Errors of Kaplan-Meier Estimates",
-     xlab = "FGM Cases", ylab = "Standard Errors", cex = 0.5)
-
+plot(sqrt(SmallSurvival[[3]]), 
+     main = "Standard Errors of Kaplan-Meier Estimates",
+     xlab = "FGM Cases", 
+     ylab = "Standard Errors", 
+     cex = 0.5)
 
 # Save Standard Errors
 a <- as.data.table(sqrt(SmallSurvival$varlog))
@@ -276,7 +324,10 @@ a <- as.data.table(sqrt(SmallSurvival$varlog))
 write.table(a, "C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/05b -Uncertainty/ethiopia_se.csv")
 
 # Store Confidence Intervals
- ses <- confint(SmallSurvival, parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), level = 0.95)
+ ses <- confint(SmallSurvival, 
+                parm = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), 
+                level = 0.95
+               )
  ConInList[[i]] <- ses  
  ses
  
@@ -285,7 +336,9 @@ write.table(a, "C:/Users/weny/Google Drive/2018/FGM/01 -Survival Analysis/05b -U
 
 # Standard error based on random sampling ---------------------------------
 
-SmallSurvey_randomdesign    <- survfit(Surv(time, g121) ~ 1 , data=df,
+SmallSurvey_randomdesign    <- survfit(Surv(time, 
+                                            g121) ~ 1 , 
+                                       data=df,
                                     weight=wgt) # status 9 is converted to NA
 
 ggsurvplot(SmallSurvey_randomdesign,
@@ -300,20 +353,25 @@ nRisk[[i]]                   <- tables[, 2]
 nEvent[[i]]                  <- tables[, 3]
 nSurv[[i]]                  <- tables[, 5]
 
-SmallSurvey_random_conf      <- setNames(data.frame(matrix(ncol = 3, nrow = 16)), c("se","lower_random","upper_random"))
+SmallSurvey_random_conf      <- setNames(data.frame(matrix(ncol = 3, 
+                                                           nrow = 16
+                                                          )
+                                                   ), 
+                                         c("se",
+                                           "lower_random",
+                                           "upper_random"
+                                          )
+                                        )
 SmallSurvey_random_conf[, 2] <- as.data.frame(SmallSurvey_randomdesign$lower)
 SmallSurvey_random_conf[, 3] <- as.data.frame(SmallSurvey_randomdesign$upper)
 SmallSurvey_random_conf[, 1] <- as.data.frame(SmallSurvey_randomdesign$std.err)
 
 SmallSurvey_random[[i]]     <- SmallSurvey_random_conf
 
-
-
 }
 
 # Results -----------------------------------------------------------------
 
 names(SmallSurvey_random)<- listdta
-
 
 SmallSurvey_random[1]
